@@ -13,6 +13,7 @@ _logger = logging.getLogger(__name__)
 #   sid_stock_cfg.<model_prefix>__<human_slug>__c<company_id>
 #
 from .xmlid_plan import XMLID_PLAN
+from .plan_validation import validate_xmlid_plan
 
 def _ensure_imd(env, model, res_id, name, key=None):
     """Ensure ir.model.data has (sid_stock_cfg, name) -> (model, res_id).
@@ -73,37 +74,13 @@ def _ensure_imd(env, model, res_id, name, key=None):
 
 def _validate_xmlid_plan(plan):
     """Validate required fields and duplicated names before applying the plan."""
-    required_fields = ("model", "res_id", "name")
-    missing = []
-    invalid = []
-    names = {}
+    report = validate_xmlid_plan(plan)
 
-    for idx, item in enumerate(plan):
-        if not isinstance(item, dict):
-            invalid.append(f"index {idx}: expected dict, got {type(item).__name__}")
-            continue
+    for name, idxs in report["duplicate_names"].items():
+        _logger.warning("XMLID_PLAN validation: name '%s' is duplicated at indexes %s", name, idxs)
 
-        for field in required_fields:
-            if field not in item:
-                missing.append(f"index {idx}: missing field '{field}'")
-
-        if "res_id" in item and not isinstance(item["res_id"], int):
-            invalid.append(f"index {idx}: res_id must be int (got {type(item['res_id']).__name__})")
-
-        name = item.get("name")
-        if isinstance(name, str) and name:
-            names.setdefault(name, []).append(idx)
-        else:
-            invalid.append(f"index {idx}: name must be a non-empty string")
-
-    duplicates = [name for name, idxs in names.items() if len(idxs) > 1]
-    for name in duplicates:
-        _logger.warning("XMLID_PLAN validation: name '%s' is duplicated at indexes %s", name, names[name])
-
-    errors = missing + invalid
-    if errors:
-        raise ValueError("Invalid XMLID_PLAN:\n- " + "\n- ".join(errors))
-
+    if report["errors"]:
+        raise ValueError("Invalid XMLID_PLAN:\n- " + "\n- ".join(report["errors"]))
 
 
 def post_init_hook(cr, registry):
