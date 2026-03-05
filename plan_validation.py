@@ -37,3 +37,16 @@ def validate_xmlid_plan(plan):
         "errors": errors,
         "duplicate_names": duplicate_names,
     }
+
+
+def summarize_duplicate_names(duplicate_names, max_items=5):
+    """Build a compact and stable summary for duplicate-name warnings."""
+    if not duplicate_names:
+        return ""
+
+    ordered = sorted(duplicate_names.items(), key=lambda item: item[0])
+    snippets = [f"{name}@{idxs}" for name, idxs in ordered[:max_items]]
+    remaining = len(ordered) - len(snippets)
+    if remaining > 0:
+        snippets.append(f"... +{remaining} more")
+    return "; ".join(snippets)

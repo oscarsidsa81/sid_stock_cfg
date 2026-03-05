@@ -13,7 +13,7 @@ _logger = logging.getLogger(__name__)
 #   sid_stock_cfg.<model_prefix>__<human_slug>__c<company_id>
 #
 from .xmlid_plan import XMLID_PLAN
-from .plan_validation import validate_xmlid_plan
+from .plan_validation import summarize_duplicate_names, validate_xmlid_plan
 
 def _ensure_imd(env, model, res_id, name, key=None):
     """Ensure ir.model.data has (sid_stock_cfg, name) -> (model, res_id).
@@ -76,8 +76,12 @@ def _validate_xmlid_plan(plan):
     """Validate required fields and duplicated names before applying the plan."""
     report = validate_xmlid_plan(plan)
 
-    for name, idxs in report["duplicate_names"].items():
-        _logger.warning("XMLID_PLAN validation: name '%s' is duplicated at indexes %s", name, idxs)
+    if report["duplicate_names"]:
+        _logger.warning(
+            "XMLID_PLAN validation: found %s duplicated names. Sample: %s",
+            len(report["duplicate_names"]),
+            summarize_duplicate_names(report["duplicate_names"]),
+        )
 
     if report["errors"]:
         raise ValueError("Invalid XMLID_PLAN:\n- " + "\n- ".join(report["errors"]))

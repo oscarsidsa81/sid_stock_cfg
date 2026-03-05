@@ -1,6 +1,6 @@
 import unittest
 
-from plan_validation import validate_xmlid_plan
+from plan_validation import summarize_duplicate_names, validate_xmlid_plan
 
 
 class TestValidateXmlidPlan(unittest.TestCase):
@@ -27,6 +27,15 @@ class TestValidateXmlidPlan(unittest.TestCase):
         report = validate_xmlid_plan(plan)
         self.assertIn("dup", report["duplicate_names"])
         self.assertEqual(report["duplicate_names"]["dup"], [0, 1])
+
+    def test_summarize_duplicate_names_is_compact_and_stable(self):
+        duplicates = {
+            "zeta": [2, 9],
+            "alpha": [0, 1],
+            "beta": [3, 7],
+        }
+        summary = summarize_duplicate_names(duplicates, max_items=2)
+        self.assertEqual(summary, "alpha@[0, 1]; beta@[3, 7]; ... +1 more")
 
 
 if __name__ == "__main__":
