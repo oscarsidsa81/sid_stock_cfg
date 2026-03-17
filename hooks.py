@@ -2672,7 +2672,18 @@ XMLID_PLAN = [{'model': 'ir.sequence',
   'res_id': 2,
   'name': 'stock_warehouse__ptllo__c1',
   'key': {'code': 'Ptllo', 'name': 'Puertollano', 'company_id': 1},
-  'current_xml_id': '__export__.stock_warehouse_2_b186cdb7'}]
+  'current_xml_id': '__export__.stock_warehouse_2_b186cdb7'}
+,{'model': 'stock.picking.type',
+  'res_id': 36,
+  'name': 'stock_picking_type__mad__outgoing__seq2__entrega_a_cliente__c1',
+  'key': {'warehouse_code': 'Mad', 'code': 'outgoing', 'sequence': 2, 'name': 'Madrid: ENTREGA A CLIENTE', 'company_id': 1},
+  'current_xml_id': ''}
+,{'model': 'res.partner',
+  'res_id': 5528,
+  'name': 'res_partner__almacen_sidsa_alcobendas__c1',
+  'key': {'name': 'SUMINISTROS INDUSTRIALES DIVERSOS, S.A.U., ALMACÉN SIDSA ALCOBENDAS', 'company_id': 1},
+  'current_xml_id': ''}
+]
 
 
 def _ensure_imd(env, model, res_id, name, key=None):
