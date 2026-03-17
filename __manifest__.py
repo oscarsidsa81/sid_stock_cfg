@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 {
- 'name' : 'SID Stock Config - Stable XML IDs',
+ 'name' : 'sid_stock_cfg',
  'version' : '15.0.1.0.0',
  'category' : 'Inventory',
  'summary' : 'Fix stable external IDs (ir.model.data) for existing stock configuration records.',
