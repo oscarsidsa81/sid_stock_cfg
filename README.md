@@ -128,3 +128,40 @@ Notas operativas
 Licencia
 
 LGPL-3
+
+
+## Lógica del módulo (para futuras migraciones)
+
+Este módulo actúa como **ancla de XMLIDs**: no crea registros funcionales nuevos de stock, sino que fija IDs externos estables (`ir.model.data`) sobre registros que **ya existen** en la base de datos. 
+
+### Flujo de ejecución
+
+Al instalar el módulo, Odoo ejecuta `post_init_hook`, que recorre `XMLID_PLAN` y procesa cada elemento (`model`, `res_id`, `name`). 
+
+Para cada entrada, aplica esta lógica:
+
+1. **Registro destino no existe**  
+   - No rompe instalación.
+   - Deja warning y continúa.
+   
+2. **Ya existe `sid_stock_cfg.<name>` y apunta al mismo registro**  
+   - No modifica nada (`exists`), manteniendo idempotencia.  
+   
+3. **Ya existe `sid_stock_cfg.<name>` pero apunta a otro registro**  
+   - No sobrescribe.
+   - Intenta crear nombre alternativo seguro: `name__id_<res_id>`. 
+
+4. **No existe XMLID en `sid_stock_cfg`**  
+   - Crea `ir.model.data` con:
+     - `module = sid_stock_cfg`
+     - `name = <name del plan>`
+     - `model`, `res_id`
+     - `noupdate = True`
+
+Al final deja un resumen de ejecución por estados (`created`, `exists`, `created_suffixed`, `missing_record`, `collision`). 
+
+### Qué guardar en mente para migraciones
+
+- Este módulo sirve para **estabilizar legado** (registros ya creados manualmente/importados).
+- Para registros nuevos de negocio, conviene declarar XMLID en su módulo funcional.
+- El campo `current_xml_id` dentro del plan funciona como snapshot de referencia del XMLID original detectado al exportar. 
