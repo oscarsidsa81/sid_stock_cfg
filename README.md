@@ -117,6 +117,31 @@ El repositorio incluye tests unitarios para la validación de planes de XMLID:
 
 python -m unittest tests/test_plan_validation.py
 
+
+Simulación rápida (para ver cómo queda)
+
+Si quieres ver el comportamiento sin instalar en Odoo, puedes ejecutar una simulación local:
+
+```bash
+python examples/simulate_plan_normalization.py
+```
+
+La simulación muestra:
+
+- Plan de entrada con casos de duplicados y tildes.
+- Reporte de `validate_xmlid_plan` (`errors`, `duplicate_names`, `non_ascii_names`).
+- Resúmenes compactos de duplicados/no-ASCII/renombres.
+- Plan final normalizado (`execution_plan`) con nombres deterministas (`__id_<res_id>` cuando aplica).
+
+Ejemplo esperado (extracto):
+
+```text
+res_id=101: stock_rule__vendor_madrid_cliente__seq20__mad_stock_customers__c1__id_101
+res_id=102: stock_rule__vendor_madrid_cliente__seq20__mad_stock_customers__c1__id_102
+res_id=103: stock_rule__madrid_preparacion__seq20__devolucion__c1__id_103
+res_id=104: stock_rule__madrid_preparacion__seq20__devolucion__c1__id_104
+```
+
 Notas operativas
 
     Este módulo es especialmente útil como módulo ancla/base técnica en ecosistemas con múltiples personalizaciones.
