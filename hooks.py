@@ -3,6 +3,14 @@ import logging
 
 from odoo import api, SUPERUSER_ID
 
+from .plan_validation import (
+    build_safe_xmlid_plan,
+    summarize_duplicate_names,
+    summarize_non_ascii_names,
+    summarize_renamed_entries,
+    validate_xmlid_plan,
+)
+
 _logger = logging.getLogger(__name__)
 
 # This module does NOT create or modify stock records.
@@ -2744,6 +2752,36 @@ def _ensure_imd(env, model, res_id, name, key=None):
 
 
 def post_init_hook(cr, registry):
+    report = validate_xmlid_plan(XMLID_PLAN)
+    if report["errors"]:
+        raise ValueError("sid_stock_cfg XMLID_PLAN validation errors: %s" % "; ".join(report["errors"]))
+
+    execution_plan, rename_map = build_safe_xmlid_plan(XMLID_PLAN)
+    diagnostics = {
+        "plan_items": len(XMLID_PLAN),
+        "duplicate_name_groups": len(report["duplicate_names"]),
+        "non_ascii_name_groups": len(report["non_ascii_names"]),
+        "renamed_entries": len(rename_map),
+    }
+
+    if report["duplicate_names"]:
+        duplicate_summary = summarize_duplicate_names(report["duplicate_names"])
+        _logger.warning(
+            "sid_stock_cfg: XMLID_PLAN has duplicate names; applying deterministic __id_<res_id> names. %s",
+            duplicate_summary,
+        )
+
+    if report["non_ascii_names"]:
+        non_ascii_summary = summarize_non_ascii_names(report["non_ascii_names"])
+        _logger.warning(
+            "sid_stock_cfg: XMLID_PLAN has non-ASCII names; transliterating to ASCII-safe names. %s",
+            non_ascii_summary,
+        )
+
+    if rename_map:
+        rename_summary = summarize_renamed_entries(rename_map)
+        _logger.info("sid_stock_cfg: XMLID plan names normalized before apply. %s", rename_summary)
+
     env = api.Environment(cr, SUPERUSER_ID, {})
     counts = {
         "created": 0,
@@ -2754,7 +2792,7 @@ def post_init_hook(cr, registry):
         "collision": 0,
     }
 
-    for item in XMLID_PLAN:
+    for item in execution_plan:
         status, _xmlid = _ensure_imd(
             env,
             item["model"],
@@ -2765,4 +2803,4 @@ def post_init_hook(cr, registry):
         if status in counts:
             counts[status] += 1
 
-    _logger.info("sid_stock_cfg: XMLID plan applied. stats=%s", counts)
+    _logger.info("sid_stock_cfg: XMLID plan applied. stats=%s diagnostics=%s", counts, diagnostics)
